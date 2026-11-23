@@ -19,7 +19,13 @@ def find_zero_columns(matrix):
     """Индексы (с 0) столбцов, где есть хотя бы один нулевой элемент."""
     if not matrix:
         return []
-    return [j for j in range(len(matrix[0]))
+    width = len(matrix[0])
+    for index, row in enumerate(matrix, start=1):
+        if len(row) != width:
+            raise InputDataError(
+                f"строка {index} содержит {len(row)} элементов, "
+                f"ожидалось {width}")
+    return [j for j in range(width)
             if any(row[j] == 0 for row in matrix)]
 
 
@@ -69,5 +75,5 @@ def main(argv=None):
     return protocol.EXIT_OK if ok else protocol.EXIT_REPORTED_ERROR
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     sys.exit(main())
