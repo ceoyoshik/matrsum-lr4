@@ -4,8 +4,9 @@
 находит общую сумму элементов только тех столбцов, которые содержат хотя бы
 один нулевой элемент (вариант 11).
 
-Версия 1.0.0: программа состоит из трёх модулей (ввод, обработка, вывод),
-которые обмениваются JSON-сообщениями.
+Версия 1.1.0: программа состоит из трёх модулей (ввод, обработка, вывод),
+которые обмениваются JSON-сообщениями. Версия протестирована в ЛР №4:
+381 тест, покрытие 100 %, CI на GitHub Actions.
 
 ## Структура проекта
 
@@ -20,7 +21,8 @@ matrsum/
 │   ├── mapping.py            # сопоставление данных модулей
 │   └── errors.py             # исключения интеграции
 ├── docs/           # документация (ТЗ, архитектура, интеграция, тесты, ревью)
-├── tests/          # модульные и интеграционные тесты
+├── tests/          # тесты: unit, whitebox, integration, regression,
+│                   #        legacy_unittest (набор ЛР №3)
 ├── .github/        # CI (GitHub Actions), шаблоны Issue и Pull Request
 ├── requirements.txt
 ├── README.md
@@ -29,9 +31,8 @@ matrsum/
 
 ## Требования к окружению
 
-- Python 3.8 или новее;
-- для проверки стиля и покрытия — flake8 и coverage
-  (`pip install -r requirements.txt`).
+- Python 3.11 или новее (проверено на 3.11, 3.12 и 3.14);
+- pytest, pytest-cov, flake8 (`pip install -r requirements.txt`).
 
 ## Запуск
 
@@ -56,27 +57,51 @@ python src/matrsum.py --timeout 5          # тайм-аут модуля обр
 в [docs/integration.md](docs/integration.md); тесты — в
 [docs/integration_test.md](docs/integration_test.md); сравнение стратегий —
 в [docs/integration_strategies.md](docs/integration_strategies.md);
-инспекция кода — в [docs/code_review.md](docs/code_review.md).
+инспекция кода — в [docs/code_review_integration.md](docs/code_review_integration.md).
 
-## Тесты
+## Тестирование (ЛР №4)
 
-```
-python -m unittest discover -s tests -v
-```
-
-С замером покрытия:
+Запуск всех тестов с отчётом о покрытии:
 
 ```
-coverage run --source=src -m unittest discover -s tests
-coverage report -m
+pytest -q --cov=src --cov-report=term-missing
 ```
+
+Проверка стиля:
+
+```
+flake8 src tests
+```
+
+Наборы тестов и маркеры:
+
+| Каталог | Маркер | Что проверяет |
+| --- | --- | --- |
+| `tests/unit` | `unit`, `whitebox` | модули по отдельности, классы эквивалентности, границы, покрытие решений и условий |
+| `tests/integration` | `integration` | обмен JSON-файлами, подпроцесс, повторы, тайм-аут, CLI |
+| `tests/regression` | `regression` | эталонные результаты и формат вывода |
+| `tests/legacy_unittest` | — | тесты ЛР №3, сохранённые для контроля регрессий |
+
+Результаты: 381 тест, покрытие 100 % по операторам, решениям и условиям.
+
+Документация по тестированию:
+
+- [docs/testing.md](docs/testing.md) — план, сценарии, протокол, покрытие;
+- [docs/bug_reports.md](docs/bug_reports.md) — 4 баг-репорта;
+- [docs/testing_metrics.md](docs/testing_metrics.md) — метрики;
+- [docs/testing_methods.md](docs/testing_methods.md) — сравнение методов;
+- [docs/code_review.md](docs/code_review.md) — инспекция кода и ревью тестов.
+
+CI: [.github/workflows/testing.yml](.github/workflows/testing.yml) — flake8,
+тесты с порогом покрытия 95 % на Python 3.11/3.12, отдельная задача
+регрессионных тестов, запуск по push, pull request, тегу и по расписанию.
 
 ## Стратегия ветвления
 
 Используется упрощённый Git Flow:
 
 - `main` — стабильная ветка, каждая версия помечается тегом (`v0.1.0`,
-  `v1.0.0`);
+  `v1.0.0`, `v1.1.0`);
 - `develop` — ветка интеграции, в неё вносятся все изменения;
 - `feature/*` — короткоживущие ветки под отдельные задачи (по одной на
   каждый шаг интеграции).
