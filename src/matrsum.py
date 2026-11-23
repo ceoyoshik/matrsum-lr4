@@ -117,5 +117,5 @@ def main(argv=None, read=input, write=print, write_err=None,
     return EXIT_SUCCESS
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     sys.exit(main())

@@ -36,9 +36,13 @@ EXIT_FAILURE = 3          # модуль не смог даже записать
 
 def is_number(value):
     """Конечное число (int или float), не bool."""
-    return (isinstance(value, (int, float))
-            and not isinstance(value, bool)
-            and math.isfinite(value))
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        # Целые числа в JSON не ограничены, но в float не помещаются.
+        return False
 
 
 def is_int(value):
@@ -150,6 +154,12 @@ def parse_response(message):
     columns, total = payload.get("zero_columns"), payload.get("sum")
     if not isinstance(columns, list) or not all(map(is_int, columns)):
         raise ProtocolError("zero_columns должен быть списком целых")
+    if len(set(columns)) != len(columns):
+        raise ProtocolError(
+            "zero_columns не должен содержать повторяющиеся номера")
+    if not all(1 <= number <= MAX_DIM for number in columns):
+        raise ProtocolError(
+            f"номера столбцов должны быть от 1 до {MAX_DIM}")
     if not is_number(total):
         raise ProtocolError("sum должна быть конечным числом")
     return columns, float(total)
@@ -176,7 +186,7 @@ def dump_json(path, message):
         with open(temp_path, "w", encoding="utf-8") as handle:
             handle.write(_compact_arrays(text) + "\n")
         os.replace(temp_path, path)
-    except ValueError as exc:
+    except (ValueError, TypeError) as exc:
         raise ProtocolError(f"сообщение нельзя записать: {exc}") from None
     except OSError as exc:
         raise ModuleUnavailableError(
